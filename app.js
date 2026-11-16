@@ -2,18 +2,6 @@
 const DB='NikoletaLearningCenter',VER=1,STORE='records';
 let db,recorder=null,stream=null,recordParts=[],recordStarted=0,elapsedBefore=0,timerHandle=null,currentId=null;
 const $=id=>document.getElementById(id);
-// Early, independent drawer control: register before app initialization.
-document.addEventListener('DOMContentLoaded',()=>{
- const drawer=document.getElementById('sidebar');
- const shade=document.getElementById('menuScrim');
- const trigger=document.getElementById('menuToggle');
- if(!drawer||!trigger)return;
- const close=()=>{drawer.classList.remove('open');shade?.classList.remove('show');trigger.setAttribute('aria-expanded','false')};
- trigger.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const opened=drawer.classList.toggle('open');shade?.classList.toggle('show',opened);trigger.setAttribute('aria-expanded',String(opened))});
- shade?.addEventListener('click',close);
- drawer.querySelectorAll('[data-home],[data-open]').forEach(item=>item.addEventListener('click',close));
-});
-
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtDate=s=>new Date(s).toLocaleString('el-GR',{dateStyle:'medium',timeStyle:'short'});
 const fmtTime=s=>{s=Math.floor(s||0);return [Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(n=>String(n).padStart(2,'0')).join(':')};
@@ -93,11 +81,23 @@ async function simpleView(k){
  document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{if(confirm('Να διαγραφεί αυτή η καταχώριση;')){await del(b.dataset.delete);simpleView(k)}});
  document.querySelectorAll('[data-file-download]').forEach(b=>b.onclick=async()=>{const x=(await all()).find(v=>v.id===b.dataset.fileDownload);if(x?.fileBlob)download(x.fileBlob,x.fileName||'arxeio')})
 }
+
 const sidebar=$('sidebar'),scrim=$('menuScrim'),menuToggle=$('menuToggle');
 function closeMenu(){sidebar?.classList.remove('open');scrim?.classList.remove('show');menuToggle?.setAttribute('aria-expanded','false')}
-function toggleMenu(){const open=!sidebar.classList.contains('open');sidebar.classList.toggle('open',open);scrim?.classList.toggle('show',open);menuToggle?.setAttribute('aria-expanded',String(open))}
-menuToggle?.addEventListener('click',toggleMenu);scrim?.addEventListener('click',closeMenu);
-document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>{closeMenu();showHome()});
-document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{closeMenu();b.dataset.open==='audio'?audioDashboard():b.dataset.open==='settings'?settings():simpleView(b.dataset.open)});
+function toggleMenu(){if(!sidebar)return;const opened=!sidebar.classList.contains('open');sidebar.classList.toggle('open',opened);scrim?.classList.toggle('show',opened);menuToggle?.setAttribute('aria-expanded',String(opened))}
+menuToggle?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleMenu()});
+scrim?.addEventListener('click',closeMenu);
+document.addEventListener('click',e=>{
+ const home=e.target.closest('[data-home]');
+ if(home){e.preventDefault();closeMenu();showHome();return}
+ const item=e.target.closest('[data-open]');
+ if(!item)return;
+ e.preventDefault();
+ const key=item.dataset.open;
+ closeMenu();
+ if(key==='audio')audioDashboard();
+ else if(key==='settings')settings();
+ else simpleView(key);
+});
 $('newSeminar').onclick=newSeminar;$('backupBtn').onclick=backup;
 openDB().then(async()=>{try{await navigator.storage?.persist?.()}catch{}renderRecent();$('globalSearch')?.addEventListener('input',e=>runGlobalSearch(e.target.value));if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{})}).catch(e=>alert('Δεν ήταν δυνατή η τοπική βάση δεδομένων: '+e.message));
