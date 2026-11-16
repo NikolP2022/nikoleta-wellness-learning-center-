@@ -63,6 +63,8 @@ async function openSubfolder(k,group){
  document.querySelectorAll('[data-sub-delete]').forEach(b=>b.onclick=async()=>{if(confirm('Να διαγραφεί αυτή η σημείωση;')){await del(b.dataset.subDelete);openSubfolder(k,group)}});
 }
 window.openLearningSubfolder=(k,i)=>{const cfg=simple[k];if(cfg&&cfg.groups[i]!==undefined)openSubfolder(k,cfg.groups[i]).catch(e=>{console.error(e);alert('Δεν άνοιξε ο φάκελος. Δοκίμασε ξανά ή έλεγξε τη σύνδεση.')})};
+window.openLearningSubfolder=async(key,index)=>{const cfg=simple[key];if(!cfg||!cfg.groups[index])return;closeMenu();try{await openSubfolder(key,cfg.groups[index])}catch(error){console.error(error);alert('Δεν ήταν δυνατό να ανοίξει ο φάκελος.')}};
+
 async function simpleView(k){
  const cfg=simple[k];if(!cfg)return showHome();
  const type='module_'+k;let items=(await all()).filter(x=>x.type===type).sort((a,b)=>b.updated-a.updated);const isLibrary=k==='library';
