@@ -105,17 +105,8 @@ function closeMenu(){sidebar?.classList.remove('open');scrim?.classList.remove('
 function toggleMenu(){if(!sidebar)return;const opened=!sidebar.classList.contains('open');sidebar.classList.toggle('open',opened);scrim?.classList.toggle('show',opened);menuToggle?.setAttribute('aria-expanded',String(opened))}
 menuToggle?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleMenu()});
 scrim?.addEventListener('click',closeMenu);
-document.addEventListener('click',e=>{
- const home=e.target.closest('[data-home]');
- if(home){e.preventDefault();closeMenu();showHome();return}
- const item=e.target.closest('[data-open]');
- if(!item)return;
- e.preventDefault();
- const key=item.dataset.open;
- closeMenu();
- if(key==='audio')audioDashboard();
- else if(key==='settings')settings();
- else simpleView(key);
-});
+window.openLearningSection=(key)=>{closeMenu();if(key==='home'){showHome();return}const run=key==='audio'?audioDashboard():key==='settings'?settings():simpleView(key);if(run&&typeof run.catch==='function')run.catch(err=>{console.error(err);alert('Δεν ήταν δυνατή η φόρτωση της ενότητας. Δοκίμασε ξανά.')})};
+document.querySelectorAll('.nav [data-home]').forEach(b=>{b.type='button';b.onclick=e=>{e.preventDefault();window.openLearningSection('home')}});
+document.querySelectorAll('.nav [data-open]').forEach(b=>{b.type='button';b.onclick=e=>{e.preventDefault();window.openLearningSection(b.dataset.open)}});
 $('newSeminar').onclick=newSeminar;$('backupBtn').onclick=backup;
 openDB().then(async()=>{try{await navigator.storage?.persist?.()}catch{}renderRecent();$('globalSearch')?.addEventListener('input',e=>runGlobalSearch(e.target.value));if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{})}).catch(e=>alert('Δεν ήταν δυνατή η τοπική βάση δεδομένων: '+e.message));
