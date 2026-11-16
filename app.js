@@ -2,6 +2,18 @@
 const DB='NikoletaLearningCenter',VER=1,STORE='records';
 let db,recorder=null,stream=null,recordParts=[],recordStarted=0,elapsedBefore=0,timerHandle=null,currentId=null;
 const $=id=>document.getElementById(id);
+// Early, independent drawer control: register before app initialization.
+document.addEventListener('DOMContentLoaded',()=>{
+ const drawer=document.getElementById('sidebar');
+ const shade=document.getElementById('menuScrim');
+ const trigger=document.getElementById('menuToggle');
+ if(!drawer||!trigger)return;
+ const close=()=>{drawer.classList.remove('open');shade?.classList.remove('show');trigger.setAttribute('aria-expanded','false')};
+ trigger.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const opened=drawer.classList.toggle('open');shade?.classList.toggle('show',opened);trigger.setAttribute('aria-expanded',String(opened))});
+ shade?.addEventListener('click',close);
+ drawer.querySelectorAll('[data-home],[data-open]').forEach(item=>item.addEventListener('click',close));
+});
+
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtDate=s=>new Date(s).toLocaleString('el-GR',{dateStyle:'medium',timeStyle:'short'});
 const fmtTime=s=>{s=Math.floor(s||0);return [Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(n=>String(n).padStart(2,'0')).join(':')};
