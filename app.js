@@ -62,6 +62,7 @@ async function openSubfolder(k,group){
  $('subSave').onclick=async()=>{const title=$('subTitle').value.trim();const body=$('subBody').value.trim();if(!title&&!body){alert('Συμπλήρωσε τίτλο ή σημειώσεις.');return}const now=Date.now();await put({id:crypto.randomUUID(),type,title:title||group,group,body,practice:$('subPractice').value,next:$('subNext').value,created:now,updated:now});openSubfolder(k,group)};
  document.querySelectorAll('[data-sub-delete]').forEach(b=>b.onclick=async()=>{if(confirm('Να διαγραφεί αυτή η σημείωση;')){await del(b.dataset.subDelete);openSubfolder(k,group)}});
 }
+window.openLearningSubfolder=(k,i)=>{const cfg=simple[k];if(cfg&&cfg.groups[i]!==undefined)openSubfolder(k,cfg.groups[i]).catch(e=>{console.error(e);alert('Δεν άνοιξε ο φάκελος. Δοκίμασε ξανά ή έλεγξε τη σύνδεση.')})};
 async function simpleView(k){
  const cfg=simple[k];if(!cfg)return showHome();
  const type='module_'+k;let items=(await all()).filter(x=>x.type===type).sort((a,b)=>b.updated-a.updated);const isLibrary=k==='library';
@@ -79,7 +80,7 @@ async function simpleView(k){
  const groupOptions=cfg.groups.map(g=>'<option>'+esc(g)+'</option>').join('');
  const field=(id,label,placeholder,multi=true)=>'<div class="field"><label for="module_'+id+'">'+label+'</label>'+(multi?'<textarea id="module_'+id+'" placeholder="'+esc(placeholder)+'"></textarea>':'<input id="module_'+id+'" placeholder="'+esc(placeholder)+'">')+'</div>';
  showView('<div class="hero"><div><span class="pill">WELLNESS CEO WORKSPACE</span><h2>'+cfg.title+'</h2><p>'+cfg.desc+'</p></div><button class="btn light" id="back">← Αρχική</button></div>'+
- '<div class="sectionhead"><h3>Εσωτερικοί φάκελοι</h3><span class="muted">Επίλεξε για να ανοίξεις</span></div><div class="grid">'+cfg.groups.map((g,i)=>'<button type="button" class="panel subfolder" data-subfolder="'+i+'"><span class="subfolder-icon">▤</span><strong>'+esc(g)+'</strong><small>Άνοιγμα φακέλου →</small></button>').join('')+'</div>'+
+ '<div class="sectionhead"><h3>Εσωτερικοί φάκελοι</h3><span class="muted">Επίλεξε για να ανοίξεις</span></div><div class="grid">'+cfg.groups.map((g,i)=>'<button type="button" class="panel subfolder" data-subfolder="'+i+'" onclick="window.openLearningSubfolder(\''+k+'\','+i+')"><span class="subfolder-icon">▤</span><strong>'+esc(g)+'</strong><small>Άνοιγμα φακέλου →</small></button>').join('')+'</div>'+
  '<div class="panel"><h3>＋ Νέα καταχώριση</h3><div class="field"><label for="moduleTitle">Τίτλος</label><input id="moduleTitle" placeholder="Γράψε έναν σαφή τίτλο..."></div>'+
  '<div class="field"><label for="moduleGroup">Φάκελος / θεματική</label><select id="moduleGroup">'+groupOptions+'</select></div>'+
  '<div class="field"><label for="moduleDate">Ημερομηνία</label><input id="moduleDate" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
