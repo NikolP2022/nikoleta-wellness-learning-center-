@@ -92,7 +92,7 @@ async function simpleView(k){
  const groupOptions=cfg.groups.map(g=>'<option>'+esc(g)+'</option>').join('');
  const field=(id,label,placeholder,multi=true)=>'<div class="field"><label for="module_'+id+'">'+label+'</label>'+(multi?'<textarea id="module_'+id+'" placeholder="'+esc(placeholder)+'"></textarea>':'<input id="module_'+id+'" placeholder="'+esc(placeholder)+'">')+'</div>';
  showView('<div class="hero"><div><span class="pill">WELLNESS CEO WORKSPACE</span><h2>'+cfg.title+'</h2><p>'+cfg.desc+'</p></div><button class="btn light" id="back">← Αρχική</button></div>'+
- '<div class="sectionhead"><h3>Εσωτερικοί φάκελοι</h3><span class="muted">Επίλεξε για να ανοίξεις</span></div><div class="grid">'+cfg.groups.map((g,i)=>'<button type="button" class="panel subfolder" data-subfolder="'+i+'" onclick="window.openLearningSubfolder(\''+k+'\','+i+')"><span class="subfolder-icon">▤</span><strong>'+esc(g)+'</strong><small>Άνοιγμα φακέλου →</small></button>').join('')+'</div>'+
+ '<div class="sectionhead"><h3>Εσωτερικοί φάκελοι</h3><span class="muted">Επίλεξε για να ανοίξεις</span></div><div class="grid">'+cfg.groups.map((g,i)=>'<button type="button" class="panel subfolder" data-subfolder="'+i+'"><span class="subfolder-icon">▤</span><strong>'+esc(g)+'</strong><small>Άνοιγμα φακέλου →</small></button>').join('')+'</div>'+
  '<div class="panel"><h3>＋ Νέα καταχώριση</h3><div class="field"><label for="moduleTitle">Τίτλος</label><input id="moduleTitle" placeholder="Γράψε έναν σαφή τίτλο..."></div>'+
  '<div class="field"><label for="moduleGroup">Φάκελος / θεματική</label><select id="moduleGroup">'+groupOptions+'</select></div>'+
  '<div class="field"><label for="moduleDate">Ημερομηνία</label><input id="moduleDate" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
@@ -105,6 +105,16 @@ async function simpleView(k){
  '<div class="sectionhead"><h3>Οι καταχωρίσεις μου</h3><span class="muted">'+items.length+' αποθηκευμένες</span></div><div id="moduleItems">'+
  (items.length?items.map(x=>'<article class="seminar"><div><strong>'+esc(x.title)+'</strong><small>'+esc(x.group||'')+' · '+esc(x.date||'')+' · '+fmtDate(x.updated)+'</small><p class="note">'+esc(x.body||'')+'</p>'+(x.practice?'<p class="note"><b>Εφαρμογή:</b> '+esc(x.practice)+'</p>':'')+(x.next?'<p class="note"><b>Επόμενο:</b> '+esc(x.next)+'</p>':'')+(x.fileName?'<p class="note">📎 '+esc(x.fileName)+' · '+((x.fileSize||0)/1048576).toFixed(1)+' MB</p>':'')+'</div><div class="row">'+(x.fileBlob?'<button class="btn light" data-file-download="'+x.id+'">↓ Λήψη</button>':'')+'<button class="btn danger" data-delete="'+x.id+'">Διαγραφή</button></div></article>').join(''):'<p class="muted">Δεν υπάρχουν ακόμη αποθηκευμένες καταχωρίσεις.</p>')+'</div>');
  $('back').onclick=showHome;
+ document.querySelectorAll('[data-subfolder]').forEach(button=>{
+   button.addEventListener('click',async()=>{
+     const index=Number(button.dataset.subfolder);
+     if(!Number.isInteger(index)||!cfg.groups[index])return;
+     button.disabled=true;
+     try{closeMenu();await openSubfolder(k,cfg.groups[index])}
+     catch(error){console.error('Άνοιγμα φακέλου:',error);alert('Δεν ήταν δυνατό να ανοίξει ο φάκελος.')}
+     finally{button.disabled=false}
+   });
+ });
  // Τα κουμπιά υποφακέλων χρησιμοποιούν έναν μόνο χειριστή onclick.
 
  $('saveModule').onclick=async()=>{const t=$('moduleTitle').value.trim(),file=isLibrary?$('libraryFile').files[0]:null;if(!t&&!file){alert('Συμπλήρωσε τίτλο ή επίλεξε αρχείο.');return}const now=Date.now();await put({id:crypto.randomUUID(),type,title:t||file.name,group:$('moduleGroup').value,date:$('moduleDate').value,body:$('module_body').value,practice:$('module_practice').value,source:$('module_source').value,next:$('module_next').value,fileName:file?.name||'',fileType:file?.type||'',fileSize:file?.size||0,fileBlob:file||null,created:now,updated:now});simpleView(k)};
