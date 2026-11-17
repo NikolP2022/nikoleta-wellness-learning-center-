@@ -1,8 +1,8 @@
 {
   "name": "Nikoleta Wellness CEO – Learning Center",
   "short_name": "Learning Center",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/nikoleta-wellness-learning-center-/",
+  "scope": "/nikoleta-wellness-learning-center-/",
   "display": "standalone",
   "background_color": "#f7f5ee",
   "theme_color": "#123f2d",
@@ -16,5 +16,5 @@
       "purpose": "any maskable"
     }
   ],
-  "id": "/"
+  "id": "/nikoleta-wellness-learning-center-/"
 }
