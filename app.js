@@ -128,7 +128,7 @@ async function openSubfolder(k,group){
  $('subSave').onclick=async()=>{const title=$('subTitle').value.trim();const body=$('subBody').value.trim();if(!title&&!body){alert('Συμπλήρωσε τίτλο ή σημειώσεις.');return}const now=Date.now();await put({id:crypto.randomUUID(),type,title:title||group,group,body,practice:$('subPractice').value,next:$('subNext').value,created:now,updated:now});openSubfolder(k,group)};
  document.querySelectorAll('[data-sub-delete]').forEach(b=>b.onclick=async()=>{if(confirm('Να διαγραφεί αυτή η σημείωση;')){await del(b.dataset.subDelete);openSubfolder(k,group)}});
 }
-window.openLearningSubfolder=async(key,index)=>{const cfg=simple[key];if(!cfg||!cfg.groups[index])return;closeMenu();try{await openSubfolder(key,cfg.groups[index])}catch(error){console.error(error);alert('Δεν ήταν δυνατό να ανοίξει ο φάκελος.')}};
+window.openLearningSubfolder=async(key,index)=>{const cfg=simple[key];if(!cfg||!cfg.groups[index])return;closeMenu();try{await openSubfolder(key,cfg.groups[index])}catch(error){console.error(error);alert('Σφάλμα φόρτωσης φακέλου: '+String(error?.message||error))}};
 
 async function simpleView(k){
  const cfg=simple[k];if(!cfg)return showHome();
@@ -166,7 +166,7 @@ async function simpleView(k){
      if(!Number.isInteger(index)||!cfg.groups[index])return;
      button.disabled=true;
      try{closeMenu();await openSubfolder(k,cfg.groups[index])}
-     catch(error){console.error('Άνοιγμα φακέλου:',error);alert('Δεν ήταν δυνατό να ανοίξει ο φάκελος.')}
+     catch(error){console.error('Άνοιγμα φακέλου:',error);alert('Σφάλμα φόρτωσης φακέλου: '+String(error?.message||error))}
      finally{button.disabled=false}
    });
  });
