@@ -159,8 +159,8 @@ async function simpleView(k){
 const sidebar=$('sidebar'),scrim=$('menuScrim'),menuToggle=$('menuToggle');
 function closeMenu(){sidebar?.classList.remove('open');scrim?.classList.remove('show');menuToggle?.setAttribute('aria-expanded','false')}
 function toggleMenu(){if(!sidebar)return;const opened=!sidebar.classList.contains('open');sidebar.classList.toggle('open',opened);scrim?.classList.toggle('show',opened);menuToggle?.setAttribute('aria-expanded',String(opened))}
-menuToggle?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleMenu()});
-scrim?.addEventListener('click',closeMenu);
+if(menuToggle){menuToggle.onclick=toggleMenu;menuToggle.style.pointerEvents='auto';menuToggle.style.touchAction='manipulation'}
+if(scrim)scrim.onclick=closeMenu;
 window.openLearningSection=(key)=>{closeMenu();if(key==='home'){showHome();return}const run=key==='audio'?audioDashboard():key==='settings'?settings():simpleView(key);if(run&&typeof run.catch==='function')run.catch(err=>{console.error(err);alert('Δεν ήταν δυνατή η φόρτωση της ενότητας. Δοκίμασε ξανά.')})};
 document.querySelectorAll('.nav [data-home]').forEach(b=>{b.type='button';b.onclick=e=>{e.preventDefault();window.openLearningSection('home')}});
 document.querySelectorAll('.nav [data-open]').forEach(b=>{b.type='button';b.onclick=e=>{e.preventDefault();window.openLearningSection(b.dataset.open)}});
