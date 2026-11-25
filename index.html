@@ -41,16 +41,22 @@ main{padding-top:20px}
 .subfolder small{color:var(--muted);font-size:12px}
 
 .lesson{position:relative;overflow:hidden;margin:14px 0;padding:23px 24px 22px;border-left:3px solid var(--gold)}.lesson h3{font:600 20px Georgia,serif;color:var(--forest);margin:7px 0 10px}.lesson p,.panel li{font-size:14px;line-height:1.75;color:#42584b}.lesson-kicker{font-size:10px;letter-spacing:1.8px;font-weight:800;color:#9b7a3e}.lesson-practice{background:#f4f6f0;border:1px solid #e5eadd;border-radius:11px;padding:12px 15px;margin:14px 0}.lesson-practice p{margin:5px 0 0}.lesson-example{border-top:1px solid var(--line);padding-top:12px;margin:12px 0 0}.lesson ol,.panel ol{padding-left:22px}.subfolder{background:var(--paper);color:var(--ink)}@media(max-width:620px){.lesson{padding:18px 16px}.lesson h3{font-size:18px}.lesson p,.panel li{font-size:13px}}
+
+.nav-toggle-state{position:fixed!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;left:-10px!important;top:-10px!important}
+#navToggle:checked ~ .app #sidebar{transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important}
+#navToggle:checked ~ .menu-scrim{opacity:1!important;pointer-events:auto!important}
+.menu-toggle{user-select:none;-webkit-user-select:none}
 </style>
 </head>
 <body>
-<div class="menu-scrim" id="menuScrim" onclick="document.getElementById('sidebar').classList.remove('open');this.classList.remove('show');document.getElementById('menuToggle').setAttribute('aria-expanded','false')"></div>
+<input type="checkbox" id="navToggle" class="nav-toggle-state" aria-label="Άνοιγμα μενού">
+<label class="menu-scrim" id="menuScrim" for="navToggle" aria-label="Κλείσιμο μενού"></label>
 <div class="app"><aside class="sidebar" id="sidebar">
 <div class="logo"><div class="logo-mark">Nikoleta</div><small>WELLNESS CEO · LEARNING</small></div>
 <nav class="nav" aria-label="Κύρια πλοήγηση">
 <button type="button" class="active" data-home onclick="window.openLearningSection('home')">⌂ &nbsp; Αρχική</button><button type="button" data-open="training" onclick="window.openLearningSection('training')">✧ &nbsp; Ακαδημία</button><button type="button" data-open="nutrition" onclick="window.openLearningSection('nutrition')">◈ &nbsp; Διατροφή & Προϊόντα</button><button type="button" data-open="audio" onclick="window.openLearningSection('audio')">◖ &nbsp; Σεμινάρια & Ηχογραφήσεις</button><button type="button" data-open="library" onclick="window.openLearningSection('library')">▤ &nbsp; Βιβλιοθήκη</button><button type="button" data-open="messages" onclick="window.openLearningSection('messages')">✉ &nbsp; Έτοιμα Μηνύματα</button><button type="button" data-open="goals" onclick="window.openLearningSection('goals')">◎ &nbsp; Στόχοι</button><button type="button" data-open="content" onclick="window.openLearningSection('content')">▧ &nbsp; Social Media</button><button type="button" data-open="network" onclick="window.openLearningSection('network')">♧ &nbsp; Συνεργασίες & Ομάδα</button><button type="button" data-open="events" onclick="window.openLearningSection('events')">▦ &nbsp; Εκδηλώσεις</button><button type="button" data-open="settings" onclick="window.openLearningSection('settings')">⚙ &nbsp; Ρυθμίσεις & Αντίγραφα</button>
 </nav><div class="side-note">«Μαθαίνω. Εξελίσσομαι. Πετυχαίνω.»</div></aside>
-<main><div class="menu-bar"><button type="button" class="menu-toggle" id="menuToggle" aria-label="Άνοιγμα μενού" aria-expanded="false" >☰</button><span class="menu-brand">Nikoleta Wellness CEO ♡ Health Life</span></div><section id="home">
+<main><div class="menu-bar"><label class="menu-toggle" id="menuToggle" for="navToggle" aria-label="Άνοιγμα μενού">☰</label><span class="menu-brand">Nikoleta Wellness CEO ♡ Health Life</span></div><section id="home">
 <div class="welcome"><div><h1>Καλώς ήρθες!</h1><p>Ο προσωπικός σου χώρος γνώσης και επαγγελματικής εξέλιξης.</p></div><div class="welcome-actions"><button class="btn gold" id="newSeminar">＋ Νέο σεμινάριο</button><button class="btn light" id="backupBtn">Αντίγραφο ασφαλείας</button></div></div>
 <div class="panel search-panel"><div class="field" style="margin:0"><label for="globalSearch">Αναζήτηση στο Learning Center</label><input id="globalSearch" type="search" placeholder="Αναζήτησε σεμινάρια, σημειώσεις, αρχεία..."></div><div id="searchResults" class="note" style="margin-top:8px">Γράψε μια λέξη για να βρεις τις αποθηκευμένες καταχωρίσεις σου.</div></div>
 <div class="grid">
@@ -64,4 +70,4 @@ main{padding-top:20px}
 <div class="overview"><div><div class="sectionhead"><h3>Πρόσφατα σεμινάρια</h3><span class="muted" id="seminarCount">0 σεμινάρια</span></div><div class="panel" id="recentList"><p class="muted">Δεν έχεις δημιουργήσει ακόμη σεμινάριο.</p></div></div>
 <div class="panel"><h3>Ο χώρος σου</h3><p class="muted">Οι σημειώσεις, τα αρχεία και οι ηχογραφήσεις σου συγκεντρώνονται εδώ, με δυνατότητα δημιουργίας αντιγράφου ασφαλείας και μεταφοράς.</p><button class="btn light" data-open="settings">Ρυθμίσεις & μεταφορά</button></div></div>
 </section><section id="view" class="hidden"></section><div class="footer">NIKOΛΕΤΑ WELLNESS CEO · Προσωπικός χώρος μάθησης</div></main></div>
-<script src="./app.js?v=41"></script></body></html>
+<script src="./app.js?v=42"></script></body></html>
