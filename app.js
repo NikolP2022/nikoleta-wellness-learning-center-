@@ -240,8 +240,9 @@ async function simpleView(k){
 
 const sidebar=$('sidebar'),scrim=$('menuScrim'),menuToggle=$('menuToggle');
 function closeMenu(){sidebar?.classList.remove('open');scrim?.classList.remove('show');menuToggle?.setAttribute('aria-expanded','false')}
-function toggleMenu(){if(!sidebar)return;const opened=!sidebar.classList.contains('open');sidebar.classList.toggle('open',opened);scrim?.classList.toggle('show',opened);menuToggle?.setAttribute('aria-expanded',String(opened))}
-if(menuToggle){menuToggle.onclick=toggleMenu;menuToggle.style.pointerEvents='auto';menuToggle.style.touchAction='manipulation'}
+function toggleMenu(){if(!sidebar)return;const opened=!sidebar.classList.contains('open');sidebar.classList.toggle('open',opened);scrim?.classList.toggle('show',opened);menuToggle?.setAttribute('aria-expanded',String(opened));menuToggle?.setAttribute('aria-label',opened?'Κλείσιμο μενού':'Άνοιγμα μενού')}
+window.toggleLearningMenu=toggleMenu;
+if(menuToggle){menuToggle.onclick=null;menuToggle.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();toggleMenu()},{capture:true});menuToggle.addEventListener('pointerup',event=>{if(event.pointerType==='touch'){event.preventDefault();event.stopPropagation();toggleMenu()}},{passive:false});menuToggle.style.pointerEvents='auto';menuToggle.style.touchAction='manipulation'}
 if(scrim)scrim.onclick=closeMenu;
 window.openLearningSection=async(key)=>{closeMenu();try{if(key==='home'){showHome();return}if(key==='audio'){await audioDashboard();return}if(key==='settings'){await settings();return}if(!simple[key])throw new Error('Δεν υπάρχει ρύθμιση φακέλου για: '+key);await simpleView(key)}catch(err){console.error('Section load failed ['+key+']:',err);const view=$('view');if(view){view.classList.remove('hidden');view.innerHTML='<div class="panel"><h2>Δεν άνοιξε η ενότητα</h2><p>Παρουσιάστηκε σφάλμα κατά τη φόρτωση.</p><p class="note">'+esc(String(err?.message||err))+'</p><button class="btn gold" id="sectionRetry">Δοκίμασε ξανά</button><button class="btn light" id="sectionHome">Αρχική</button></div>';$('sectionRetry').onclick=()=>window.openLearningSection(key);$('sectionHome').onclick=showHome}}};
 document.querySelectorAll('.nav [data-home]').forEach(b=>{b.type='button';b.onclick=e=>{e.preventDefault();window.openLearningSection('home')}});
