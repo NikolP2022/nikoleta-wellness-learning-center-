@@ -104,7 +104,7 @@ async function runTranscription(id){
    if(!response.ok)throw Error('Σφάλμα υπηρεσίας '+response.status+' στο τμήμα '+(i+1));
    const data=await response.json(),chunk=String(data.text||data.transcript||'').trim();
    if(!chunk)throw Error('Δεν επιστράφηκε κείμενο για το τμήμα '+(i+1));
-   result+=(result?'\\n\\n':'')+chunk;s.transcript=result;s.updated=Date.now();await put(s);
+   result+=(result?'\n\n':'')+chunk;s.transcript=result;s.updated=Date.now();await put(s);
    if($('transcript'))$('transcript').value=result;
   }
   if(status)status.textContent='Ολοκληρώθηκε! Το κείμενο αποθηκεύτηκε στον φάκελό σου.';
