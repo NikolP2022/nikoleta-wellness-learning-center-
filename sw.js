@@ -1,5 +1,5 @@
-const CACHE='nikoleta-learning-center-v44';
-const ASSETS=['./','./index.html','./manifest.json','./icon.svg','./app.js?v=44'];
+const CACHE='nikoleta-learning-center-v45';
+const ASSETS=['./','./index.html','./manifest.json','./icon.svg','./app.js?v=45'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
