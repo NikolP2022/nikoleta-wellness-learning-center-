@@ -482,3 +482,4 @@ document.querySelectorAll('.nav [data-home]').forEach(b=>{b.type='button';b.oncl
 document.querySelectorAll('[data-open]').forEach(b=>{b.type='button';b.onclick=e=>{e.preventDefault();window.openLearningSection(b.dataset.open)}});
 $('newSeminar').onclick=newSeminar;$('backupBtn').onclick=backup;
 ensureDB().then(async()=>{try{await navigator.storage?.persist?.()}catch{}renderRecent();$('globalSearch')?.addEventListener('input',e=>runGlobalSearch(e.target.value));bootCloudSync();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{})}).catch(e=>alert('Δεν ήταν δυνατή η τοπική βάση δεδομένων: '+e.message));
+// Local Greek transcription: Transformers.js Whisper Tiny, processed in short saved recording segments.
