@@ -160,33 +160,71 @@ function renderSeminarEntries(s){document.querySelectorAll('.entry-list').forEac
 function editor(id,label,value,placeholder){return '<div class="field"><label>'+label+'</label><textarea id="'+id+'" placeholder="'+placeholder+'">'+esc(value)+'</textarea><button type="button" class="btn light entry-add" data-entry-add="'+id+'">＋ Προσθήκη νέας καταχώρισης</button><div class="entry-list" id="entries-'+id+'"></div></div>'}
 function audioList(s){const allFiles=s.audio||[],files=allFiles.map((a,index)=>({...a,_index:index})).filter(a=>a.kind!=='recording-part'),sessions=[...new Set(allFiles.filter(a=>a.kind==='recording-part'&&a.sessionId).map(a=>a.sessionId))];const rows=files.map(a=>'<div class="fileitem"><div><strong>'+esc(a.name)+'</strong><div class="note">'+(a.size/1048576).toFixed(1)+' MB · '+fmtDate(a.date)+'</div><div class="note" id="audioTranscribeStatus-'+a._index+'" role="status" aria-live="polite"></div><div id="audioTranscribeText-'+a._index+'" class="audio-transcript-output" hidden></div></div><div class="row"><button class="btn light" data-play="'+a._index+'">▶ Αναπαραγωγή</button><button type="button" class="btn gold" data-transcribe-audio="'+a._index+'">✦ Μετατροπή σε κείμενο</button><button class="btn light" data-download="'+a._index+'">↓ Λήψη</button><button class="btn danger" data-delete-audio="'+a._index+'">Διαγραφή</button></div></div>').join('');const recovery=sessions.map(id=>'<div class="recbox"><strong>ℹ️ Διατηρημένα τμήματα ηχογράφησης</strong><p class="note">Τα τμήματα παραμένουν αποθηκευμένα ξεχωριστά για ασφαλή απομαγνητοφώνηση μεγάλων σεμιναρίων.</p><span class="note">'+allFiles.filter(a=>a.sessionId===id).length+' τμήματα</span></div>').join('');return (files.length?rows:'<p class="muted">Δεν υπάρχουν ακόμη αρχεία ήχου.</p>')+recovery}
 function bindAudioActions(s){document.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{const a=s.audio[+b.dataset.play],url=URL.createObjectURL(a.blob),w=window.open('','_blank');if(w)w.document.write('<title>Αναπαραγωγή ήχου</title><audio controls autoplay src="'+url+'" style="width:95%;margin:20px"></audio>')});document.querySelectorAll('[data-transcribe-audio]').forEach(b=>b.onclick=()=>transcribeAudioFile(s.id,Number(b.dataset.transcribeAudio)));document.querySelectorAll('[data-download]').forEach(b=>b.onclick=()=>{const a=s.audio[+b.dataset.download];download(a.blob,a.name)});document.querySelectorAll('[data-delete-audio]').forEach(b=>b.onclick=async()=>{const index=Number(b.dataset.deleteAudio);if(!Number.isInteger(index)||!s.audio[index])return;if(!confirm('Να διαγραφεί αυτό το αρχείο ήχου;'))return;s.audio.splice(index,1);s.updated=Date.now();await put(s);await refreshAudio(s.id)});document.querySelectorAll('[data-recover-session]').forEach(b=>b.onclick=async()=>{const sessionId=b.dataset.recoverSession,parts=s.audio.filter(a=>a.kind==='recording-part'&&a.sessionId===sessionId).sort((x,y)=>x.date-y.date);if(!parts.length)return;const mime=parts[0].blob?.type||'audio/webm',blob=new Blob(parts.map(a=>a.blob),{type:mime}),ext=mime.includes('mp4')?'m4a':mime.includes('ogg')?'ogg':'webm';s.audio=s.audio.filter(a=>!(a.kind==='recording-part'&&a.sessionId===sessionId));s.audio.push({id:crypto.randomUUID(),name:'Ανακτημένη_ηχογράφηση_'+new Date().toISOString().replace(/[:.]/g,'-')+'.'+ext,blob,size:blob.size,date:Date.now(),kind:'recovered-recording'});s.updated=Date.now();await put(s);openSeminar(s.id)})}
+let localWhisperPromise=null;
+async function getLocalWhisper(setStatus){
+ if(!localWhisperPromise){
+  localWhisperPromise=(async()=>{
+   setStatus('Φόρτωση μηχανής ελληνικής απομαγνητοφώνησης στη συσκευή (μόνο την πρώτη φορά)…');
+   const {pipeline,env}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2');
+   env.allowLocalModels=false;env.useBrowserCache=true;
+   return await pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',{dtype:'q8',progress_callback:p=>{if(p.status==='progress'&&p.total)setStatus('Λήψη μηχανής απομαγνητοφώνησης: '+Math.round(p.progress||0)+'%')}})
+  })().catch(e=>{localWhisperPromise=null;throw e});
+ }
+ return localWhisperPromise;
+}
+async function decodeAudio16k(blob){
+ const bytes=await blob.arrayBuffer();
+ const Ctx=window.AudioContext||window.webkitAudioContext;
+ const ctx=new Ctx();
+ try{
+  const decoded=await ctx.decodeAudioData(bytes);
+  const channels=decoded.numberOfChannels,source=decoded.getChannelData(0),mono=new Float32Array(source.length);
+  if(channels===1)mono.set(source);else{const second=decoded.getChannelData(1);for(let i=0;i<source.length;i++)mono[i]=(source[i]+second[i])*0.5}
+  const rate=decoded.sampleRate,targetRate=16000;
+  if(rate===targetRate)return mono;
+  const length=Math.floor(mono.length*targetRate/rate),out=new Float32Array(length),ratio=rate/targetRate;
+  for(let i=0;i<length;i++){const pos=i*ratio,left=Math.floor(pos),frac=pos-left;out[i]=mono[left]*(1-frac)+(mono[Math.min(left+1,mono.length-1)]||0)*frac}
+  return out;
+ }finally{await ctx.close()}
+}
 async function transcribeAudioFile(id,index){
  const status=$('audioTranscribeStatus-'+index),output=$('audioTranscribeText-'+index);
- const endpoint=localStorage.getItem('nikoleta_transcription_endpoint')||'';
  const setStatus=message=>{if(status)status.textContent=message};
- if(!endpoint){setStatus('Για να λειτουργήσει η μετατροπή, χρειάζεται πρώτα ενεργοποίηση της ασφαλούς υπηρεσίας απομαγνητοφώνησης στις Ρυθμίσεις.');return}
  const s=(await all()).find(x=>x.id===id),item=s?.audio?.[index];
  if(!s||!item?.blob){setStatus('Δεν βρέθηκε το αρχείο ήχου.');return}
- if(item.size>25*1024*1024){setStatus('Το αρχείο είναι μεγαλύτερο από 25 MB. Χρειάζεται συμπίεση ή διαχωρισμός πριν από τη μετατροπή.');return}
  const button=document.querySelector('[data-transcribe-audio="'+index+'"]');
  if(button)button.disabled=true;
  try{
-  setStatus('Γίνεται αποστολή και μετατροπή της ηχογράφησης σε ελληνικό κείμενο…');
-  const form=new FormData();
-  form.append('file',item.blob,item.name||'recording.webm');
-  form.append('language','el');form.append('seminar_title',s.title||'');
-  const response=await fetch(endpoint,{method:'POST',body:form});
-  let data={};try{data=await response.json()}catch{}
-  if(!response.ok)throw new Error(data.error||data.details||('Σφάλμα υπηρεσίας '+response.status));
-  const transcript=String(data.text||data.transcript||'').trim();
-  if(!transcript)throw new Error('Η υπηρεσία δεν επέστρεψε κείμενο.');
-  const heading='[ '+(item.name||'Ηχογράφηση')+' ]';
-  const existing=String(s.transcript||'').trim();
-  s.transcript=(existing?existing+'\\n\\n':'')+heading+'\\n'+transcript;
-  s.updated=Date.now();await put(s);
+  const model=await getLocalWhisper(setStatus);
+  let parts=[];
+  if(item.sessionId)parts=s.audio.filter(a=>a.kind==='recording-part'&&a.sessionId===item.sessionId).sort((a,b)=>a.date-b.date);
+  if(!parts.length&&item.kind==='recording'){
+   const groups={};for(const p of s.audio.filter(a=>a.kind==='recording-part'))(groups[p.sessionId]??=[]).push(p);
+   const candidates=Object.values(groups).filter(g=>g.length&&g[g.length-1].date<=item.date).sort((a,b)=>Math.abs(a[a.length-1].date-item.date)-Math.abs(b[b.length-1].date-item.date));
+   if(candidates.length&&item.date-candidates[0][candidates[0].length-1].date<120000)parts=candidates[0].sort((a,b)=>a.date-b.date);
+  }
+  if(!parts.length)parts=[item];
+  let transcript='',done=0;
+  for(let p=0;p<parts.length;p++){
+   const audio=await decodeAudio16k(parts[p].blob);
+   const duration=audio.length/16000;
+   const windows=Math.ceil(duration/25);
+   for(let w=0;w<windows;w++){
+    const from=w*25*16000,to=Math.min(audio.length,(w+1)*25*16000),slice=audio.slice(from,to);
+    setStatus('Απομαγνητοφώνηση στα ελληνικά… τμήμα '+(p+1)+'/'+parts.length+' · '+(w+1)+'/'+windows);
+    const result=await model({raw:slice,sampling_rate:16000},{language:'greek',task:'transcribe',return_timestamps:false});
+    const textPart=String(result?.text||'').trim();
+    if(textPart)transcript+=(transcript?' ':'')+textPart;
+   }
+   done++;
+   s.transcript=(String(s.transcript||'').trim()?'\n\n':'')+'[ '+(item.name||'Ηχογράφηση')+' ]\n'+transcript;
+   s.updated=Date.now();await put(s);
+   if($('transcript'))$('transcript').value=s.transcript;
+  }
+  if(!transcript)throw new Error('Δεν αναγνωρίστηκε ομιλία στο αρχείο.');
   if(output){output.hidden=false;output.innerHTML='<strong>📝 Κείμενο ηχογράφησης</strong><pre style="white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0">'+esc(transcript)+'</pre>'}
-  setStatus('✓ Η μετατροπή ολοκληρώθηκε και το κείμενο αποθηκεύτηκε στην καρτέλα «Απομαγνητοφώνηση».');
- }catch(error){setStatus('Δεν ολοκληρώθηκε η μετατροπή: '+error.message)}
+  setStatus('✓ Η μετατροπή ολοκληρώθηκε. Το κείμενο αποθηκεύτηκε στην καρτέλα «Απομαγνητοφώνηση».');
+ }catch(error){setStatus('Δεν ολοκληρώθηκε η μετατροπή: '+(error?.message||String(error)))}
  finally{if(button)button.disabled=false}
 }
 async function runTranscription(id){
