@@ -204,7 +204,7 @@ async function transcribeAudioFile(id,index){
    if(candidates.length&&item.date-candidates[0][candidates[0].length-1].date<120000)parts=candidates[0].sort((a,b)=>a.date-b.date);
   }
   if(!parts.length)parts=[item];
-  let transcript='',done=0;
+  let transcript='',done=0;const originalTranscript=String(s.transcript||'').trim();const transcriptHeading='[ '+(item.name||'Ηχογράφηση')+' ]';
   for(let p=0;p<parts.length;p++){
    const audio=await decodeAudio16k(parts[p].blob);
    const duration=audio.length/16000;
@@ -217,7 +217,7 @@ async function transcribeAudioFile(id,index){
     if(textPart)transcript+=(transcript?' ':'')+textPart;
    }
    done++;
-   s.transcript=(String(s.transcript||'').trim()?'\n\n':'')+'[ '+(item.name||'Ηχογράφηση')+' ]\n'+transcript;
+   s.transcript=(originalTranscript?originalTranscript+'\n\n':'')+transcriptHeading+'\n'+transcript;
    s.updated=Date.now();await put(s);
    if($('transcript'))$('transcript').value=s.transcript;
   }
