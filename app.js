@@ -284,7 +284,7 @@ async function renderAcademyFolder(group){
 
 window.openLearningSubfolder=async(key,index)=>{const cfg=simple[key];if(!cfg||!cfg.groups[index])return;closeMenu();try{if(key==='training'&&cfg.groups[index]!=='NLP & Επικοινωνία'){await renderAcademyFolder(cfg.groups[index])}else{await openSubfolder(key,cfg.groups[index])}}catch(error){console.error('Folder open error',error);const v=$('view');if(v){v.classList.remove('hidden');v.innerHTML='<div class="panel"><h2>Σφάλμα φόρτωσης</h2><p>'+esc(String(error?.message||error))+'</p><button class="btn light" id="folderRetry">Προσπάθεια ξανά</button><button class="btn" id="folderBack">Πίσω</button></div>';$('folderRetry').onclick=()=>window.openLearningSubfolder(key,index);$('folderBack').onclick=()=>simpleView(key)}}};
 
-async async function simpleView(k){
+async function simpleView(k){
  const cfg=simple[k];if(!cfg)return showHome();
  const type='module_'+k;let items=(await all()).filter(x=>x.type===type).sort((a,b)=>b.updated-a.updated);const isLibrary=k==='library';
  if(k==='messages'&&!items.length){const now=Date.now();const templates=[
